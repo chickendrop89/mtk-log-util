@@ -2,7 +2,7 @@
 My personal mtkclient wrapper for getting bootloader or kernel logs from a mediatek device
 
 ## Usage
-```shell
+```
 mtk-log-util - mtkclient wrapper for getting bootloader or kernel logs from a mediatek device
 
 positional arguments:
