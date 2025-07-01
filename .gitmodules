@@ -1,0 +1,3 @@
+[submodule "mtkclient"]
+	path = mtkclient
+	url = https://github.com/bkerler/mtkclient
