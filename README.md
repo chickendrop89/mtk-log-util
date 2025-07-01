@@ -1,6 +1,8 @@
 # mtk-log-util
 My personal mtkclient wrapper for getting bootloader or kernel logs from a mediatek device
 
+This script extracts `expdb` partition/`pstore` memory region and extracts ASCII strings from them.
+
 ## Usage
 ```
 mtk-log-util - mtkclient wrapper for getting bootloader or kernel logs from a mediatek device
@@ -21,12 +23,16 @@ options:
 ```
 
 ## Basic Examples
-Extracting PStore memory region. Will work only if DRAM was not cleared (eg. after panic)
+Extracting `pstore` memory region. Will work only if DRAM was not cleared (eg. after panic)
 ```shell
 python logutil.py pstore
 ```
 
-Extracting preloader/tee/lk logs. Will work only if the partition exists
+Extracting `preloader`/`tee`/`lk` logs. Will work only if the partition exists
 ```shell
 python logutil.py expdb
 ```
+
+## Notes
+This script does not take `pstore` compression into account, 
+and might result in the first half of the data being corrupted if enabled.
