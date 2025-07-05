@@ -95,14 +95,14 @@ def extract_ascii_strings(output_file: Path, filename: Path, min_length: int = 4
     except OSError as error:
         logger.error('Error processing file %s: %s', filename, error)
 
-def extract_with_mtkclient(extraction_type: str, output_filename: str, address: str = None, size: str = None) -> bool:
+def extract_with_mtkclient(extraction_type: str, output_filename: str, address: str = None, size: str = None, da: bool = True) -> bool:
     """Generic wrapper for mtkclient."""
     cmd : str
 
     if extraction_type == 'expdb':
         cmd = f'{MTK_CLIENT_CMD} r expdb {output_filename} {MTK_CLIENT_ARGS}'.strip()
     elif extraction_type == 'pstore':
-        cmd = f'{MTK_CLIENT_CMD} da peek {address} {size} --filename {output_filename} {MTK_CLIENT_ARGS}'.strip()
+        cmd = f'{MTK_CLIENT_CMD} {'da' if da else ''} peek {address} {size} --filename {output_filename} {MTK_CLIENT_ARGS}'.strip()
 
     return run_command(cmd)
 
@@ -197,7 +197,7 @@ def extract_expdb(output_file: Path) -> bool:
     logger.error('Failed to extract expdb partition')
     return False
 
-def extract_pstore(output_file: Path, pstore_address: str = None, pstore_size: str = None, auto_detect: bool = False) -> bool:
+def extract_pstore(output_file: Path, pstore_address: str = None, pstore_size: str = None, auto_detect: bool = False, da: bool = True) -> bool:
     """Extract and analyze pstore from memory."""
 
     address, size = resolve_pstore_params(pstore_address, pstore_size, auto_detect)
@@ -205,7 +205,7 @@ def extract_pstore(output_file: Path, pstore_address: str = None, pstore_size: s
     with tempfile.TemporaryDirectory() as tmp:
         raw_pstore_filename = f"{tmp}/pstore.bin"
 
-        if extract_with_mtkclient('pstore', raw_pstore_filename, address, size):
+        if extract_with_mtkclient('pstore', raw_pstore_filename, address, size, da):
             extract_ascii_strings(filename=raw_pstore_filename, output_file=output_file)
             return True
 
@@ -246,12 +246,17 @@ def main() -> bool:
     parser.add_argument(
         '--auto-detect-pstore',
         action='store_true',
-        help='Auto-detect pstore address and size from expdb partition (pstore command only)'
+        help='Auto-detect pstore address and size from expdb partition (pstore only)'
+    )
+    parser.add_argument(
+        '--dont-peek-via-da',
+        action='store_false',
+        help='Don\'t do a peek via Download Agent (use in case of issues) (pstore only)'
     )
     args = parser.parse_args()
 
-    if args.auto_detect_pstore and args.command != 'pstore':
-        logger.warning('--auto-detect-pstore is only valid with pstore command, ignoring')
+    if args.auto_detect_pstore or args.dont_peek_via_da and args.command != 'pstore':
+        logger.warning('This argument is valid only with pstore command, ignoring')
 
     logger.info('Output file: %s', args.filename)
     output_file = Path(args.filename)
@@ -261,7 +266,8 @@ def main() -> bool:
     if args.command == 'pstore':
         return extract_pstore(
             output_file, args.pstore_address,
-            args.pstore_size, args.auto_detect_pstore
+            args.pstore_size, args.auto_detect_pstore,
+            args.dont_peek_via_da
         )
 
     return False
