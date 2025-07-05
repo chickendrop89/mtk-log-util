@@ -19,7 +19,8 @@ options:
                         Pstore memory address (default: 0x48090000)
   --pstore-size PSTORE_SIZE
                         Pstore memory size (default: 0xe0000)
-  --auto-detect-pstore  Auto-detect pstore address and size from expdb partition (pstore command only)
+  --auto-detect-pstore  Auto-detect pstore address and size from expdb partition (pstore only)
+  --dont-peek-via-da    Don't do a peek via Download Agent (use in case of issues) (pstore only)
 ```
 
 ## Basic Examples
