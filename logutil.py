@@ -53,7 +53,6 @@ def run_command(cmd: str) -> bool:
         with subprocess.Popen(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            universal_newlines=True,
             shell=True, text=True,
             args=cmd, bufsize=1,
         ) as process:
@@ -95,14 +94,17 @@ def extract_ascii_strings(output_file: Path, filename: Path, min_length: int = 4
     except OSError as error:
         logger.error('Error processing file %s: %s', filename, error)
 
-def extract_with_mtkclient(extraction_type: str, output_filename: str, address: str = None, size: str = None, da: bool = True) -> bool:
+def extract_with_mtkclient(extraction_type: str, output_filename: str,
+    address: str = None, size: str = None, da: bool = True) -> bool:
     """Generic wrapper for mtkclient."""
+
     cmd : str
 
     if extraction_type == 'expdb':
-        cmd = f'{MTK_CLIENT_CMD} r expdb {output_filename} {MTK_CLIENT_ARGS}'.strip()
+        cmd =  f'{MTK_CLIENT_CMD} r expdb {output_filename} {MTK_CLIENT_ARGS}'
     elif extraction_type == 'pstore':
-        cmd = f'{MTK_CLIENT_CMD} {'da' if da else ''} peek {address} {size} --filename {output_filename} {MTK_CLIENT_ARGS}'.strip()
+        cmd =  f'{MTK_CLIENT_CMD} {'da' if da else ''} peek {address} {size} '
+        cmd += f'--filename {output_filename} {MTK_CLIENT_ARGS}'
 
     return run_command(cmd)
 
@@ -169,7 +171,8 @@ def detect_pstore_addr() -> tuple[str, str]:
             logger.error('Error reading expdb file for pstore detection: %s', error)
             return PSTORE_ADDRESS, PSTORE_SIZE
 
-def resolve_pstore_params(pstore_address: str, pstore_size: str, auto_detect: bool) -> tuple[str, str]:
+def resolve_pstore_params(pstore_address: str, pstore_size: str,
+    auto_detect: bool) -> tuple[str, str]:
     """Resolve pstore parameters."""
 
     if auto_detect:
@@ -197,7 +200,8 @@ def extract_expdb(output_file: Path) -> bool:
     logger.error('Failed to extract expdb partition')
     return False
 
-def extract_pstore(output_file: Path, pstore_address: str = None, pstore_size: str = None, auto_detect: bool = False, da: bool = True) -> bool:
+def extract_pstore(output_file: Path, pstore_address: str = None,
+    pstore_size: str = None, auto_detect: bool = False, da: bool = True) -> bool:
     """Extract and analyze pstore from memory."""
 
     address, size = resolve_pstore_params(pstore_address, pstore_size, auto_detect)
@@ -216,7 +220,8 @@ def main() -> bool:
     """Main entry point"""
 
     parser = argparse.ArgumentParser(
-        description='mtk-log-util - mtkclient wrapper for getting bootloader or kernel logs from a mediatek device'
+        description='''mtk-log-util - mtkclient wrapper for getting bootloader
+        or kernel logs from a mediatek device'''
     )
     parser.add_argument(
         'command', 
