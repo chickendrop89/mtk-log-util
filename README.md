@@ -40,3 +40,4 @@ and might result in the first half of the data being corrupted if enabled.
 
 ## Requirements
 - Python 3.9 or newer
+- Cloning with `--recurse-submodules` to fetch `mtkclient` repo
