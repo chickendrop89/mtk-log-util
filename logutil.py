@@ -37,7 +37,7 @@ def setup_logging() -> logging.Logger:
             record.msg = f'[mtklogs] {record.msg}'
             return super().format(record)
 
-    log = logging.getLogger('mtk_extractor')
+    log = logging.getLogger('mtk-log-util')
     log.setLevel(logging.INFO)
 
     handler = logging.StreamHandler()
