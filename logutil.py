@@ -45,6 +45,7 @@ def setup_logging() -> logging.Logger:
     log.addHandler(handler)
     return log
 
+
 def run_command(cmd: str) -> bool:
     """Execute a shell command and stream output."""
 
@@ -56,8 +57,9 @@ def run_command(cmd: str) -> bool:
             shell=True, text=True,
             args=cmd, bufsize=1,
         ) as process:
-            for line in iter(process.stdout.readline, ''):
-                print(f'[mtkclient] {line.rstrip()}')
+            if process.stdout:
+                for line in iter(process.stdout.readline, ''):
+                    print(f'[mtkclient] {line.rstrip()}')
 
             return_code = process.wait()
             if return_code != 0:
@@ -68,6 +70,7 @@ def run_command(cmd: str) -> bool:
     except OSError as error:
         logger.error('Exception while running command: %s', error)
         return False
+
 
 def extract_ascii_strings(output_file: Path, filename: Path, min_length: int = 4) -> None:
     """Extract ASCII strings from a binary."""
@@ -94,8 +97,9 @@ def extract_ascii_strings(output_file: Path, filename: Path, min_length: int = 4
     except OSError as error:
         logger.error('Error processing file %s: %s', filename, error)
 
+
 def extract_with_mtkclient(extraction_type: str, output_filename: str,
-    address: str = None, size: str = None, da: bool = True) -> bool:
+    address: str | None = None, size: str | None = None, da: bool = True) -> bool:
     """Generic wrapper for mtkclient."""
 
     cmd : str
@@ -108,14 +112,16 @@ def extract_with_mtkclient(extraction_type: str, output_filename: str,
 
     return run_command(cmd)
 
+
 def detect_pstore_addr() -> tuple[str, str]:
     """Auto-detect pstore configuration from expdb partition."""
 
-    def _find_pstore_config_in_data(data: bytes) -> tuple[str, str]:
+    def _find_pstore_config_in_data(data: bytes) -> tuple[str | None, str | None]:
         """Search for pstore configuration in binary data."""
 
         ascii_strings = re.findall(rb'[\x20-\x7E]{4,}', data)
-        pstore_addr = pstore_size = None
+        pstore_addr: str | None = None
+        pstore_size: str | None = None
 
         for string in ascii_strings:
             try:
@@ -171,7 +177,8 @@ def detect_pstore_addr() -> tuple[str, str]:
             logger.error('Error reading expdb file for pstore detection: %s', error)
             return PSTORE_ADDRESS, PSTORE_SIZE
 
-def resolve_pstore_params(pstore_address: str, pstore_size: str,
+
+def resolve_pstore_params(pstore_address: str | None, pstore_size: str | None,
     auto_detect: bool) -> tuple[str, str]:
     """Resolve pstore parameters."""
 
@@ -186,6 +193,7 @@ def resolve_pstore_params(pstore_address: str, pstore_size: str,
     logger.info('Extracting pstore from memory (MemAddr: %s. Size: %s)', address, size)
     return address, size
 
+
 def extract_expdb(output_file: Path) -> bool:
     """Extract and analyze expdb partition."""
 
@@ -194,14 +202,15 @@ def extract_expdb(output_file: Path) -> bool:
         logger.info('Extracting expdb partition...')
 
         if extract_with_mtkclient('expdb', raw_expdb_filename):
-            extract_ascii_strings(filename=raw_expdb_filename, output_file=output_file)
+            extract_ascii_strings(filename=Path(raw_expdb_filename), output_file=output_file)
             return True
 
     logger.error('Failed to extract expdb partition')
     return False
 
-def extract_pstore(output_file: Path, pstore_address: str = None,
-    pstore_size: str = None, auto_detect: bool = False, da: bool = True) -> bool:
+
+def extract_pstore(output_file: Path, pstore_address: str | None = None,
+    pstore_size: str | None = None, auto_detect: bool = False, da: bool = True) -> bool:
     """Extract and analyze pstore from memory."""
 
     address, size = resolve_pstore_params(pstore_address, pstore_size, auto_detect)
@@ -210,16 +219,18 @@ def extract_pstore(output_file: Path, pstore_address: str = None,
         raw_pstore_filename = f"{tmp}/pstore.bin"
 
         if extract_with_mtkclient('pstore', raw_pstore_filename, address, size, da):
-            extract_ascii_strings(filename=raw_pstore_filename, output_file=output_file)
+            extract_ascii_strings(filename=Path(raw_pstore_filename), output_file=output_file)
             return True
 
     logger.error('Failed to extract pstore from memory')
     return False
 
+
 def main() -> bool:
     """Main entry point"""
 
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='''mtk-log-util - mtkclient wrapper for getting bootloader
         or kernel logs from a mediatek device'''
     )
@@ -276,6 +287,7 @@ def main() -> bool:
         )
 
     return False
+
 
 logger = setup_logging()
 
